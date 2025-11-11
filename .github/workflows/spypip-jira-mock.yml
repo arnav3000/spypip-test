@@ -41,7 +41,7 @@ jobs:
       - name: Run SpyPip Jira Notifier (mock mode)
         run: |
           echo "🔍 Running SpyPip notifier in DRY-RUN mode..."
-          python .github/scripts/spypip_jira_notifier.py \
+          python scripts/spypip_jira_notifier.py \
             --repo ${{ github.repository }} \
             --base-tag ${{ github.event.inputs.base || 'v1.0.0' }} \
             --head-tag ${{ github.event.inputs.head || github.sha }} \
