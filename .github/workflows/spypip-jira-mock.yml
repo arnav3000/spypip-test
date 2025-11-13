@@ -45,10 +45,10 @@ jobs:
           JIRA_USER: fake@example.com
           JIRA_API_TOKEN: fake123
         run: |
-          echo "🔍 Running SpyPip notifier in DRY-RUN mode..."
+          echo "🔍 Running SpyPip notifier in DRY-RUN (mock JIRA) mode..."
           python scripts/spypip_jira_notifier.py \
             --repo ${{ github.repository }} \
-            --base-tag ${{ github.event.inputs.base || 'v1.0.0' }} \
+            --base-tag ${{ github.event.inputs.base || 'mock-base' }} \
             --head-tag ${{ github.event.inputs.head || github.sha }} \
             --jira-project MOCK \
             --jira-issuetype Bug \

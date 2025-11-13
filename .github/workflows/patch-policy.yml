@@ -1,0 +1,77 @@
+name: Patch Policy Enforcement
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-patches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Find changed patch files
+        id: changes
+        run: |
+          # get list of added/modified patch files in this PR or push
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Event is pull_request"
+            jq -r '.pull_request | .number' $GITHUB_EVENT_PATH >/tmp/prnum || true
+            prnum=$(cat /tmp/prnum 2>/dev/null || echo "")
+            files_url="${{ github.event.pull_request.url }}/files"
+            # get files via API (we will not use the API here to avoid extra calls)
+            git fetch origin ${{ github.base_ref }} || true
+            git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep -E '^patches/.*\.(patch|diff)$' || true
+            changed=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep -E '^patches/.*\.(patch|diff)$' || true)
+            echo "::set-output name=files::$changed"
+          else
+            echo "Event is push"
+            changed=$(git diff --name-only HEAD^ HEAD | grep -E '^patches/.*\.(patch|diff)$' || true)
+            echo "::set-output name=files::$changed"
+          fi
+
+      - name: Validate patch headers (if any)
+        if: steps.changes.outputs.files != ''
+        run: |
+          echo "Files: ${{ steps.changes.outputs.files }}"
+          # run validator on each file
+          for f in ${{ steps.changes.outputs.files }}; do
+            python .github/scripts/validate_patch.py "$f" || exit 2
+          done
+
+      - name: Check commit messages for JIRA
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: |
+          python .github/scripts/check_pr_commits.py
+
+      - name: Comment or create Jira if missing (PR only)
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JIRA_BASE: ${{ secrets.JIRA_BASE || '' }}
+          JIRA_USER: ${{ secrets.JIRA_USER || '' }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN || '' }}
+        run: |
+          PR_NUM=$(jq -r .pull_request.number $GITHUB_EVENT_PATH)
+          echo "PR: $PR_NUM"
+          # run commentor in dry-run mode so it only posts guidance; remove --dry-run to enable Jira creation
+          python .github/scripts/pr_jira_commentor.py --pr-number $PR_NUM --repo ${{ github.repository }} --dry-run
