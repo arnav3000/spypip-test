@@ -9,7 +9,7 @@ on:
       base:
         description: "Base ref or tag"
         required: false
-        default: "${{ github.event.before }}"
+        default: "mock-base"
 
 
       head:
