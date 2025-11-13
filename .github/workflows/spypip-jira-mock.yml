@@ -8,8 +8,10 @@ on:
     inputs:
       base:
         description: "Base ref or tag"
-        required: true
-        default: "v1.0.0"
+        required: false
+        default: "${{ github.event.before }}"
+
+
       head:
         description: "Head ref or tag"
         required: true
