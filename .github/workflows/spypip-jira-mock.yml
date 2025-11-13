@@ -39,6 +39,11 @@ jobs:
           ls -R .github
 
       - name: Run SpyPip Jira Notifier (mock mode)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JIRA_BASE: https://mock.jira.local
+          JIRA_USER: fake@example.com
+          JIRA_API_TOKEN: fake123
         run: |
           echo "🔍 Running SpyPip notifier in DRY-RUN mode..."
           python scripts/spypip_jira_notifier.py \
