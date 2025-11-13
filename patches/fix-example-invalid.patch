@@ -1,0 +1,8 @@
+# Missing JIRA and Description — should fail validation
+diff --git a/setup.py b/setup.py
+index 1111111..2222222 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,3 +1,4 @@
+ print("Setup starting")
++print("Patched by demo script")
