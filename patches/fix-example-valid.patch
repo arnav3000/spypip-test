@@ -1,7 +1,7 @@
-JIRA: ARNAV-DEMO-123
+JIRA: DEMO-123
 Upstream: no
 Title: Fix setup script logging
-Author: Arnav's Demo Bot <demo@example.com>
+Author: Demo Bot <demo@example.com>
 Date: 2025-11-13
 Description:
   This patch adds additional setup logging for internal builds.
